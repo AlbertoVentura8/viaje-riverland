@@ -105,30 +105,38 @@ export default function App() {
   const [editingExpense, setEditExp]= useState(null);
   const isSaving                    = useRef(false);
   const dbRef                       = useRef(ref(db, "viaje"));
+  const [eurAmount, setEurAmount]   = useState("");
+  const [myrAmount, setMyrAmount]   = useState("");
+  const EUR_MYR                     = 4.98; // tasa aproximada
 
-useEffect(() => {
-    const name = localStorage.getItem("vg_riverland_name") || null;
-    if (name) { setUserName(name); setNameSet(true); }
+  useEffect(() => {
+    const stored = localStorage.getItem("vg_riverland_name");
+    if (stored) { setUserName(stored); setNameSet(true); }
 
     const unsub = onValue(dbRef.current, (snapshot) => {
       const val = snapshot.val();
-      let current = val ? JSON.parse(JSON.stringify(val)) : JSON.parse(JSON.stringify(DEFAULT_DATA));
-      if (!val) set(dbRef.current, current);
-
-      const activeName = localStorage.getItem("vg_riverland_name");
-      if (activeName) {
-        const members = current.members || [];
-        if (!members.includes(activeName)) {
-          const updated = { ...current, members: [...members, activeName] };
-          set(dbRef.current, updated);
-          setData(updated);
-          return;
-        }
+      if (val) {
+        setData(val);
+      } else {
+        set(dbRef.current, DEFAULT_DATA);
+        setData(DEFAULT_DATA);
       }
-      setData(current);
     });
     return () => unsub();
   }, []);
+
+  // Register user as member once when data first loads
+  const registeredRef = useRef(false);
+  useEffect(() => {
+    if (!data || !userName || !nameSet) return;
+    if (registeredRef.current) return;
+    registeredRef.current = true;
+    const members = data.members || [];
+    if (!members.includes(userName)) {
+      const updated = { ...data, members: [...members, userName] };
+      set(dbRef.current, updated);
+    }
+  }, [data, userName, nameSet]); // eslint-disable-line
 
   const saveToFirebase = useCallback((newData) => {
     if (isSaving.current) return;
@@ -203,7 +211,14 @@ useEffect(() => {
     {id:"ideas",      label:"💡 Ideas"},
     {id:"gastos",     label:"💸 Gastos"},
     {id:"checklist",  label:"✅ Lista"},
+    {id:"extras",     label:"🌏 Extras"},
   ];
+
+  // Countdown
+  const today = new Date();
+  const tripDate = new Date("2025-07-03");
+  const diffMs = tripDate - today;
+  const daysLeft = Math.ceil(diffMs / (1000*60*60*24));
 
   const AddBtn = ({onClick, children, style={}}) => (
     <button onClick={onClick} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:100,border:`1.5px dashed ${C.clay}`,background:"transparent",color:C.clay,fontSize:"0.82rem",fontWeight:500,cursor:"pointer",fontFamily:"inherit",...style}}>
@@ -551,6 +566,69 @@ useEffect(() => {
           </div>
         );
       })()}
+
+        {/* EXTRAS */}
+        {tab==="extras" && (
+          <div>
+            {/* Countdown */}
+            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:20,marginBottom:13,boxShadow:"0 2px 12px rgba(90,60,30,0.06)",textAlign:"center"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:16}}>⏳ Cuenta atrás</div>
+              {daysLeft > 0 ? (
+                <div>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"4rem",fontWeight:700,color:C.bark,lineHeight:1}}>{daysLeft}</div>
+                  <div style={{fontSize:"0.88rem",color:C.clay,marginTop:6}}>días para Malasia 🌴</div>
+                  <div style={{marginTop:16,height:8,background:C.light,borderRadius:100,overflow:"hidden"}}>
+                    <div style={{height:"100%",background:`linear-gradient(90deg,${C.moss},${C.sky})`,borderRadius:100,width:`${Math.max(5,Math.min(100,100-(daysLeft/365*100)))}%`,transition:"width 1s"}}/>
+                  </div>
+                </div>
+              ) : (
+                <div style={{fontSize:"1.5rem"}}>🎉 ¡El viaje ha comenzado!</div>
+              )}
+            </div>
+
+            {/* EUR ↔ MYR Converter */}
+            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:20,marginBottom:13,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:4}}>💱 Conversor EUR ↔ MYR</div>
+              <div style={{fontSize:"0.75rem",color:"#9A8060",marginBottom:16}}>1 EUR ≈ {EUR_MYR} MYR (Ringgit malayo)</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:"0.7rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Euros €</div>
+                  <input type="number" value={eurAmount} placeholder="0.00"
+                    onChange={e=>{setEurAmount(e.target.value);setMyrAmount(e.target.value?(parseFloat(e.target.value)*EUR_MYR).toFixed(2):"");}}
+                    style={{width:"100%",padding:"12px 14px",borderRadius:12,border:`1.5px solid ${C.light}`,fontSize:"1.1rem",fontFamily:"Georgia,serif",fontWeight:600,color:C.bark,background:C.sand}}/>
+                </div>
+                <div style={{fontSize:"1.4rem",color:C.clay,paddingTop:20}}>⇄</div>
+                <div>
+                  <div style={{fontSize:"0.7rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Ringgit MYR</div>
+                  <input type="number" value={myrAmount} placeholder="0.00"
+                    onChange={e=>{setMyrAmount(e.target.value);setEurAmount(e.target.value?(parseFloat(e.target.value)/EUR_MYR).toFixed(2):"");}}
+                    style={{width:"100%",padding:"12px 14px",borderRadius:12,border:`1.5px solid ${C.light}`,fontSize:"1.1rem",fontFamily:"Georgia,serif",fontWeight:600,color:C.moss,background:"#F0FFF4"}}/>
+                </div>
+              </div>
+              <div style={{marginTop:14,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                {[10,20,50,100].map(eur=>(
+                  <button key={eur} onClick={()=>{setEurAmount(String(eur));setMyrAmount((eur*EUR_MYR).toFixed(2));}}
+                    style={{padding:"8px 4px",borderRadius:10,border:`1.5px solid ${C.light}`,background:C.sand,cursor:"pointer",fontSize:"0.78rem",fontWeight:500,color:C.bark,fontFamily:"inherit"}}>
+                    {eur}€ → {(eur*EUR_MYR).toFixed(0)} RM
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Map */}
+            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,overflow:"hidden",boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
+              <div style={{padding:"16px 20px 12px"}}>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:3}}>🗺️ Mapa de Malasia</div>
+                <div style={{fontSize:"0.75rem",color:"#9A8060"}}>Explora los destinos del viaje</div>
+              </div>
+              <iframe
+                title="Malasia"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4145831.6!2d107.1!3d4.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3034d3975f6730af%3A0x745969328211cd8!2sMalaysia!5e0!3m2!1ses!2ses!4v1234567890"
+                width="100%" height="340" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
+              />
+            </div>
+          </div>
+        )}
 
       {/* TOAST */}
       {toast && (
