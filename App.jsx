@@ -172,7 +172,7 @@ export default function App() {
     <div style={{minHeight:"100vh",background:C.bark,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div style={{background:C.cream,borderRadius:24,padding:"40px 28px",maxWidth:360,width:"100%",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,0.35)"}}>
         <div style={{fontSize:52,marginBottom:12}}>🌴</div>
-        <div style={{fontFamily:"Georgia,serif",fontSize:"1.8rem",fontWeight:700,color:C.bark,marginBottom:6}}>¡Hola, RIVERLAND!</div>
+        <div style={{fontFamily:"Georgia,serif",fontSize:"1.8rem",fontWeight:700,color:C.bark,marginBottom:6}}>¡HOLA, RIVERLANDER!</div>
         <div style={{fontSize:"0.88rem",color:"#8A7050",marginBottom:26,lineHeight:1.6}}>¿Cómo te llamas?<br/>Los demás verán quién anotó cada cosa.</div>
         <input
           value={nameInput}
