@@ -106,34 +106,27 @@ export default function App() {
   const isSaving                    = useRef(false);
   const dbRef                       = useRef(ref(db, "viaje"));
 
-  useEffect(() => {
+ useEffect(() => {
     const stored = localStorage.getItem("vg_riverland_name");
-    if (stored) { setUserName(stored); setNameSet(true); }
+    const name = stored || null;
+    if (name) { setUserName(name); setNameSet(true); }
 
     const unsub = onValue(dbRef.current, (snapshot) => {
       const val = snapshot.val();
-      if (val) {
-        setData(val);
-      } else {
-        set(dbRef.current, DEFAULT_DATA);
-        setData(DEFAULT_DATA);
+      let current = val ? { ...val } : { ...DEFAULT_DATA };
+      if (!val) set(dbRef.current, current);
+
+      if (name) {
+        const members = current.members || [];
+        if (!members.includes(name)) {
+          current = { ...current, members: [...members, name] };
+          set(dbRef.current, current);
+        }
       }
+      setData(current);
     });
     return () => unsub();
   }, []);
-
-// Register user as member once when data first loads
-const registeredRef = useRef(false);
-useEffect(() => {
-  if (!data || !userName || !nameSet) return;
-  if (registeredRef.current) return;
-  registeredRef.current = true;
-  const members = data.members || [];
-  if (!members.includes(userName)) {
-    const updated = { ...data, members: [...members, userName] };
-    set(dbRef.current, updated);
-  }
-}, [data, userName, nameSet]); // eslint-disable-line
 
   const saveToFirebase = useCallback((newData) => {
     if (isSaving.current) return;
