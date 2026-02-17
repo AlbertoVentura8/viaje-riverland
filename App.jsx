@@ -211,12 +211,14 @@ export default function App() {
     {id:"ideas",      label:"💡 Ideas"},
     {id:"gastos",     label:"💸 Gastos"},
     {id:"checklist",  label:"✅ Lista"},
-    {id:"extras",     label:"🌏 Extras"},
+    {id:"cambio",     label:"💱 Cambio"},
+    {id:"mapa",       label:"🗺️ Mapa"},
   ];
 
-  // Countdown
+  // Countdown - trip is 03 July 2026
   const today = new Date();
-  const tripDate = new Date("2025-07-03");
+  today.setHours(0,0,0,0);
+  const tripDate = new Date(2026, 6, 3); // month is 0-indexed, so 6 = July
   const diffMs = tripDate - today;
   const daysLeft = Math.ceil(diffMs / (1000*60*60*24));
 
@@ -257,12 +259,15 @@ export default function App() {
           <div style={{color:"#fff",fontFamily:"Georgia,serif",fontSize:"clamp(1.4rem,5.5vw,2.4rem)",fontWeight:700,letterSpacing:"0.04em",textShadow:"0 2px 12px rgba(0,0,0,0.5)",textTransform:"uppercase",marginBottom:14}}>
             {TRIP.tripName}
           </div>
-          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"nowrap",overflowX:"auto",paddingBottom:4}}>
+          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",paddingBottom:4}}>
             {[[" 📍",TRIP.destination],["📅",TRIP.dates],["👥",TRIP.groupName]].map(([emoji,val])=>(
               <span key={val} style={{background:"rgba(255,255,255,0.18)",border:"1px solid rgba(255,255,255,0.35)",color:"#fff",padding:"6px 14px",borderRadius:100,fontSize:"0.8rem",whiteSpace:"nowrap",textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
                 {emoji} {val}
               </span>
             ))}
+            <span style={{background:"rgba(255,255,255,0.25)",border:"1px solid rgba(255,255,255,0.5)",color:"#fff",padding:"6px 14px",borderRadius:100,fontSize:"0.8rem",whiteSpace:"nowrap",fontWeight:600,textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
+              {daysLeft > 0 ? `⏳ ${daysLeft} días` : "🎉 ¡Estamos en Malasia!"}
+            </span>
           </div>
           <div style={{marginTop:12,fontSize:"0.7rem",color:"rgba(255,255,255,0.65)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
             {saving
@@ -567,64 +572,62 @@ export default function App() {
         );
       })()}
 
-        {/* EXTRAS */}
-        {tab==="extras" && (
+        {/* CAMBIO */}
+        {tab==="cambio" && (
           <div>
-            {/* Countdown */}
-            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:20,marginBottom:13,boxShadow:"0 2px 12px rgba(90,60,30,0.06)",textAlign:"center"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:16}}>⏳ Cuenta atrás</div>
-              {daysLeft > 0 ? (
+            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:24,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"1.1rem",fontWeight:500,color:C.bark,marginBottom:4}}>💱 Conversor EUR ↔ MYR</div>
+              <div style={{fontSize:"0.78rem",color:"#9A8060",marginBottom:20}}>1 EUR ≈ {EUR_MYR} MYR · Ringgit malayo</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:12,alignItems:"center",marginBottom:20}}>
                 <div>
-                  <div style={{fontFamily:"Georgia,serif",fontSize:"4rem",fontWeight:700,color:C.bark,lineHeight:1}}>{daysLeft}</div>
-                  <div style={{fontSize:"0.88rem",color:C.clay,marginTop:6}}>días para Malasia 🌴</div>
-                  <div style={{marginTop:16,height:8,background:C.light,borderRadius:100,overflow:"hidden"}}>
-                    <div style={{height:"100%",background:`linear-gradient(90deg,${C.moss},${C.sky})`,borderRadius:100,width:`${Math.max(5,Math.min(100,100-(daysLeft/365*100)))}%`,transition:"width 1s"}}/>
-                  </div>
-                </div>
-              ) : (
-                <div style={{fontSize:"1.5rem"}}>🎉 ¡El viaje ha comenzado!</div>
-              )}
-            </div>
-
-            {/* EUR ↔ MYR Converter */}
-            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:20,marginBottom:13,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:4}}>💱 Conversor EUR ↔ MYR</div>
-              <div style={{fontSize:"0.75rem",color:"#9A8060",marginBottom:16}}>1 EUR ≈ {EUR_MYR} MYR (Ringgit malayo)</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,alignItems:"center"}}>
-                <div>
-                  <div style={{fontSize:"0.7rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Euros €</div>
+                  <div style={{fontSize:"0.7rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>€ Euros</div>
                   <input type="number" value={eurAmount} placeholder="0.00"
                     onChange={e=>{setEurAmount(e.target.value);setMyrAmount(e.target.value?(parseFloat(e.target.value)*EUR_MYR).toFixed(2):"");}}
-                    style={{width:"100%",padding:"12px 14px",borderRadius:12,border:`1.5px solid ${C.light}`,fontSize:"1.1rem",fontFamily:"Georgia,serif",fontWeight:600,color:C.bark,background:C.sand}}/>
+                    style={{width:"100%",padding:"14px 16px",borderRadius:14,border:`1.5px solid ${C.light}`,fontSize:"1.3rem",fontFamily:"Georgia,serif",fontWeight:600,color:C.bark,background:C.sand}}/>
                 </div>
-                <div style={{fontSize:"1.4rem",color:C.clay,paddingTop:20}}>⇄</div>
+                <div style={{fontSize:"1.6rem",color:C.clay,marginTop:22,textAlign:"center"}}>⇄</div>
                 <div>
-                  <div style={{fontSize:"0.7rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Ringgit MYR</div>
+                  <div style={{fontSize:"0.7rem",fontWeight:600,color:C.moss,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>RM Ringgit</div>
                   <input type="number" value={myrAmount} placeholder="0.00"
                     onChange={e=>{setMyrAmount(e.target.value);setEurAmount(e.target.value?(parseFloat(e.target.value)/EUR_MYR).toFixed(2):"");}}
-                    style={{width:"100%",padding:"12px 14px",borderRadius:12,border:`1.5px solid ${C.light}`,fontSize:"1.1rem",fontFamily:"Georgia,serif",fontWeight:600,color:C.moss,background:"#F0FFF4"}}/>
+                    style={{width:"100%",padding:"14px 16px",borderRadius:14,border:`1.5px solid #80C890`,fontSize:"1.3rem",fontFamily:"Georgia,serif",fontWeight:600,color:C.moss,background:"#F0FFF4"}}/>
                 </div>
               </div>
-              <div style={{marginTop:14,display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                {[10,20,50,100].map(eur=>(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginBottom:20}}>
+                {[10,20,50,100,200,500].map(eur=>(
                   <button key={eur} onClick={()=>{setEurAmount(String(eur));setMyrAmount((eur*EUR_MYR).toFixed(2));}}
-                    style={{padding:"8px 4px",borderRadius:10,border:`1.5px solid ${C.light}`,background:C.sand,cursor:"pointer",fontSize:"0.78rem",fontWeight:500,color:C.bark,fontFamily:"inherit"}}>
-                    {eur}€ → {(eur*EUR_MYR).toFixed(0)} RM
+                    style={{padding:"12px 8px",borderRadius:12,border:`1.5px solid ${C.light}`,background:C.sand,cursor:"pointer",fontSize:"0.88rem",fontWeight:500,color:C.bark,fontFamily:"inherit",textAlign:"center"}}>
+                    <span style={{fontWeight:700}}>{eur}€</span> → <span style={{color:C.moss,fontWeight:700}}>{(eur*EUR_MYR).toFixed(0)} RM</span>
                   </button>
                 ))}
               </div>
+              <div style={{background:C.sand,borderRadius:14,padding:16}}>
+                <div style={{fontSize:"0.75rem",fontWeight:600,color:C.clay,marginBottom:10,textTransform:"uppercase",letterSpacing:"0.05em"}}>Referencia rápida</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:"0.82rem",color:C.ink}}>
+                  {[["Café","2-5 RM"],["Menú restaurante","15-25 RM"],["Taxi corto","10-15 RM"],["Cerveza","12-18 RM"],["Entrada museo","20-50 RM"],["Noche hotel medio","150-300 RM"]].map(([item,price])=>(
+                    <div key={item} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px dashed ${C.light}`}}>
+                      <span style={{color:"#8A7050"}}>{item}</span>
+                      <span style={{fontWeight:600}}>{price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+          </div>
+        )}
 
-            {/* Map */}
+        {/* MAPA */}
+        {tab==="mapa" && (
+          <div>
             <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,overflow:"hidden",boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
-              <div style={{padding:"16px 20px 12px"}}>
-                <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:3}}>🗺️ Mapa de Malasia</div>
-                <div style={{fontSize:"0.75rem",color:"#9A8060"}}>Explora los destinos del viaje</div>
+              <div style={{padding:"18px 20px 14px"}}>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"1.1rem",fontWeight:500,color:C.bark,marginBottom:3}}>🗺️ Mapa de Malasia</div>
+                <div style={{fontSize:"0.78rem",color:"#9A8060"}}>Explora los destinos del viaje</div>
               </div>
               <iframe
                 title="Malasia"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4145831.6!2d107.1!3d4.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3034d3975f6730af%3A0x745969328211cd8!2sMalaysia!5e0!3m2!1ses!2ses!4v1234567890"
-                width="100%" height="340" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
+                width="100%" height="500" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
               />
             </div>
           </div>
