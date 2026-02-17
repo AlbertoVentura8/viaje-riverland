@@ -106,21 +106,23 @@ export default function App() {
   const isSaving                    = useRef(false);
   const dbRef                       = useRef(ref(db, "viaje"));
 
- useEffect(() => {
-    const stored = localStorage.getItem("vg_riverland_name");
-    const name = stored || null;
+useEffect(() => {
+    const name = localStorage.getItem("vg_riverland_name") || null;
     if (name) { setUserName(name); setNameSet(true); }
 
     const unsub = onValue(dbRef.current, (snapshot) => {
       const val = snapshot.val();
-      let current = val ? { ...val } : { ...DEFAULT_DATA };
+      let current = val ? JSON.parse(JSON.stringify(val)) : JSON.parse(JSON.stringify(DEFAULT_DATA));
       if (!val) set(dbRef.current, current);
 
-      if (name) {
+      const activeName = localStorage.getItem("vg_riverland_name");
+      if (activeName) {
         const members = current.members || [];
-        if (!members.includes(name)) {
-          current = { ...current, members: [...members, name] };
-          set(dbRef.current, current);
+        if (!members.includes(activeName)) {
+          const updated = { ...current, members: [...members, activeName] };
+          set(dbRef.current, updated);
+          setData(updated);
+          return;
         }
       }
       setData(current);
