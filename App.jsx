@@ -122,14 +122,18 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    if (!data || !userName || !nameSet) return;
-    if (!data.members) return;
-    if (!data.members.includes(userName)) {
-      const updated = { ...data, members: [...data.members, userName] };
-      set(dbRef.current, updated);
-    }
-  }, [data, userName, nameSet]);
+// Register user as member once when data first loads
+const registeredRef = useRef(false);
+useEffect(() => {
+  if (!data || !userName || !nameSet) return;
+  if (registeredRef.current) return;
+  registeredRef.current = true;
+  const members = data.members || [];
+  if (!members.includes(userName)) {
+    const updated = { ...data, members: [...members, userName] };
+    set(dbRef.current, updated);
+  }
+}, [data, userName, nameSet]); // eslint-disable-line
 
   const saveToFirebase = useCallback((newData) => {
     if (isSaving.current) return;
