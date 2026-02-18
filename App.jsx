@@ -212,7 +212,7 @@ export default function App() {
     {id:"gastos",     label:"💸 Gastos"},
     {id:"checklist",  label:"✅ Lista"},
     {id:"cambio",     label:"💱 Cambio"},
-    {id:"mapa",       label:"🗺️ Mapa"},
+    {id:,       label:"🗺️ Mapa"},
   ];
 
   // Countdown - trip is 03 July 2026
@@ -618,7 +618,7 @@ export default function App() {
 
         {/* MAPA */}
         {tab==="mapa" && (
-          <div>
+          <div style={{margin:"-12px -13px 0"}}>
             <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,overflow:"hidden",boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
               <div style={{padding:"18px 20px 14px"}}>
                 <div style={{fontFamily:"Georgia,serif",fontSize:"1.1rem",fontWeight:500,color:C.bark,marginBottom:3}}>🗺️ Mapa de Malasia</div>
