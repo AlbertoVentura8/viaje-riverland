@@ -281,7 +281,7 @@ export default function App() {
       <div style={{display:"flex",gap:2,padding:"10px 12px 0",background:C.sand,borderBottom:`2px solid ${C.light}`,overflowX:"auto"}}>
         {TABS.map(t=>(
           <button key={t.id} className="tab-btn" onClick={()=>setTab(t.id)}
-            style={{padding:"8px 14px",borderRadius:"10px 10px 0 0",fontSize:"0.82rem",fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",border:`2px solid ${tab===t.id?C.light:"transparent"}`,borderBottom:tab===t.id?`2px solid ${C.cream}`:"2px solid transparent",background:tab===t.id?C.cream:"transparent",color:tab===t.id?C.bark:"#8B7355",marginBottom:tab===t.id?-2:0,fontFamily:"inherit"}}>
+            style={{padding:"8px 14px",borderRadius:"10px 10px 0 0",fontSize:"0.82rem",fontWeight:800,cursor:"pointer",whiteSpace:"nowrap",border:`2px solid ${tab===t.id?C.light:"transparent"}`,borderBottom:tab===t.id?`2px solid ${C.cream}`:"2px solid transparent",background:tab===t.id?C.cream:"transparent",color:tab===t.id?C.bark:"#8B7355",marginBottom:tab===t.id?-2:0,fontFamily:"inherit"}}>
             {t.label}
           </button>
         ))}
