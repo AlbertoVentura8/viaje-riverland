@@ -212,7 +212,7 @@ export default function App() {
     {id:"gastos",     label:"💸 Gastos"},
     {id:"checklist",  label:"✅ Lista"},
     {id:"cambio",     label:"💱 Cambio"},
-    {id:,       label:"🗺️ Mapa"},
+    {id:"mapa",       label:"🗺️ Mapa"},
   ];
 
   // Countdown - trip is 03 July 2026
