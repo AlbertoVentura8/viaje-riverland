@@ -251,7 +251,7 @@ export default function App() {
       `}</style>
 
       {/* HERO */}
-      <div style={{position:"relative",padding:"44px 20px 32px",textAlign:"center",overflow:"hidden",minHeight:210,background:"linear-gradient(180deg,#0D4F6B 0%,#1A7A8A 25%,#2AA5A0 45%,#48C4A8 58%,#C8A96A 72%,#D4956A 82%,#8B5E3C 100%)"}}>
+      <div style={{position:"relative",padding:"44px 20px 32px",textAlign:"center",overflow:"hidden",minHeight:140,background:"linear-gradient(180deg,#0D4F6B 0%,#1A7A8A 25%,#2AA5A0 45%,#48C4A8 58%,#C8A96A 72%,#D4956A 82%,#8B5E3C 100%)"}}>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 30% 40%,rgba(255,220,100,0.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(0,120,140,0.2) 0%,transparent 50%)"}}/>
         <div style={{position:"absolute",top:"54%",left:0,right:0,height:3,background:"rgba(255,255,255,0.18)",filter:"blur(2px)"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:50,background:"linear-gradient(transparent,rgba(80,130,80,0.4))"}}/>
@@ -281,7 +281,7 @@ export default function App() {
       <div style={{display:"flex",gap:2,padding:"10px 12px 0",background:C.sand,borderBottom:`2px solid ${C.light}`,overflowX:"auto"}}>
         {TABS.map(t=>(
           <button key={t.id} className="tab-btn" onClick={()=>setTab(t.id)}
-            style={{padding:"8px 14px",borderRadius:"10px 10px 0 0",fontSize:"0.82rem",fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",border:`2px solid ${tab===t.id?C.light:"transparent"}`,borderBottom:tab===t.id?`2px solid ${C.cream}`:"2px solid transparent",background:tab===t.id?C.cream:"transparent",color:tab===t.id?C.bark:"#8B7355",marginBottom:tab===t.id?-2:0,fontFamily:"inherit"}}>
+            style={{padding:"8px 14px",borderRadius:"10px 10px 0 0",fontSize:"0.82rem",fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",border:`2px solid ${tab===t.id?C.light:"transparent"}`,borderBottom:tab===t.id?`2px solid ${C.cream}`:"2px solid transparent",background:tab===t.id?C.cream:"transparent",color:tab===t.id?C.bark:"#8B7355",marginBottom:tab===t.id?-2:0,fontFamily:"inherit"}}>
             {t.label}
           </button>
         ))}
