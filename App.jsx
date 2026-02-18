@@ -8,6 +8,8 @@ const TRIP = {
   groupName:   "RIVERLAND",
 };
 
+const GOOGLE_MAPS_KEY = "AIzaSyDSasmInUdvWWBo8IOnnn4n4CL7gOwWqfk";
+
 const C = {
   sand: "#F5EFE0", clay: "#C8A87A", bark: "#5C3D2E", moss: "#3D6B4F",
   sky: "#4A7FA5", sunset: "#D4704A", cream: "#FAF7F0", ink: "#1A1208",
@@ -31,6 +33,13 @@ const IDEA_COLORS = {
 };
 
 const AVATAR_BG = ["#4A7FA5","#3D6B4F","#D4704A","#8B5E8A","#C8A87A","#4A8A7A","#A05050","#507050"];
+
+const FAV_CATEGORIES = {
+  visitar:    { emoji: "🏛️", color: "#4A7FA5", label: "Visitar" },
+  comer:      { emoji: "🍽️", color: "#D4956A", label: "Comer" },
+  alojarse:   { emoji: "🏨", color: "#3D6B4F", label: "Alojarse" },
+  ocio:       { emoji: "🎉", color: "#8B5E8A", label: "Ocio" },
+};
 
 const DEFAULT_DATA = {
   members: [],
@@ -116,10 +125,9 @@ export default function App() {
   const [nameInput, setNameInput]   = useState("");
   const [nameSet, setNameSet]       = useState(false);
   const [editingExpense, setEditExp]= useState(null);
-  const [editingFav, setEditFav]    = useState(null);
-  const [newFavName, setNewFavName] = useState("");
-  const [newFavLat, setNewFavLat]   = useState("");
-  const [newFavLng, setNewFavLng]   = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const isSaving                    = useRef(false);
   const dbRef                       = useRef(ref(db, "viaje"));
   const [eurAmount, setEurAmount]   = useState("");
@@ -716,67 +724,125 @@ export default function App() {
           <div>
             <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:18,marginBottom:13,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:"1rem",fontWeight:500,color:C.bark,marginBottom:4}}>⭐ Lugares favoritos</div>
-              <div style={{fontSize:"0.77rem",color:"#9A8060",marginBottom:16}}>Guarda sitios que queréis visitar</div>
+              <div style={{fontSize:"0.77rem",color:"#9A8060",marginBottom:16}}>Busca y guarda sitios que queréis visitar</div>
 
-              {favoritos.length === 0 && <div style={{textAlign:"center",color:"#9A8060",fontSize:"0.84rem",padding:20,fontStyle:"italic"}}>Aún no hay favoritos. Añade lugares que queréis visitar.</div>}
-
-              {favoritos.map((fav,i) => (
-                <div key={fav.id} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 10px",marginBottom:8,background:fav.visited?"#F0FFF4":C.sand,border:`1.5px solid ${fav.visited?"#80C890":C.light}`,borderRadius:14,transition:"all 0.15s"}}>
-                  <div onClick={()=>update(d=>{d.favoritos[i].visited=!d.favoritos[i].visited;return d;})}
-                    style={{width:28,height:28,borderRadius:"50%",border:`2px solid ${fav.visited?C.moss:C.clay}`,background:fav.visited?C.moss:"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,color:"white",fontSize:"0.8rem",transition:"all 0.15s"}}>
-                    {fav.visited&&"✓"}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:600,fontSize:"0.88rem",color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:fav.visited?"line-through":"none",opacity:fav.visited?0.6:1}}>{fav.name}</div>
-                    <div style={{fontSize:"0.7rem",color:"#9A8060",marginTop:2}}>📍 {fav.lat.toFixed(4)}, {fav.lng.toFixed(4)}</div>
-                  </div>
-                  <div style={{display:"flex",gap:6,flexShrink:0}}>
-                    <button onClick={()=>update(d=>{d.ideas.push({id:uid(),color:"blue",text:fav.name + " (desde favoritos)",author:userName,votes:0,voters:[]});return d;})}
-                      style={{padding:"6px 10px",borderRadius:10,border:`1.5px solid ${C.sky}`,background:"transparent",color:C.sky,fontSize:"0.72rem",fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
-                      → Ideas
-                    </button>
-                    <span onClick={()=>update(d=>{d.favoritos.splice(i,1);return d;})} style={{cursor:"pointer",color:"#DDD",fontSize:"0.9rem",padding:"0 4px"}}>✕</span>
-                  </div>
-                </div>
-              ))}
-
-              <div style={{marginTop:16,padding:16,background:C.sand,borderRadius:14}}>
-                <div style={{fontSize:"0.75rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Añadir lugar</div>
-                <input value={newFavName} onChange={e=>setNewFavName(e.target.value)} placeholder="Nombre del lugar..."
-                  style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.88rem",marginBottom:8,background:"white",fontFamily:"inherit"}}/>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                  <input type="number" step="0.0001" value={newFavLat} onChange={e=>setNewFavLat(e.target.value)} placeholder="Latitud (ej: 3.1390)"
-                    style={{padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.82rem",background:"white",fontFamily:"inherit"}}/>
-                  <input type="number" step="0.0001" value={newFavLng} onChange={e=>setNewFavLng(e.target.value)} placeholder="Longitud (ej: 101.6869)"
-                    style={{padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.82rem",background:"white",fontFamily:"inherit"}}/>
-                </div>
-                <button onClick={()=>{
-                  if(!newFavName.trim()||!newFavLat||!newFavLng)return;
-                  update(d=>{d.favoritos.push({id:uid(),name:newFavName.trim(),lat:parseFloat(newFavLat),lng:parseFloat(newFavLng),visited:false});return d;});
-                  setNewFavName("");setNewFavLat("");setNewFavLng("");
-                  showToast("⭐ Lugar guardado");
-                }}
-                  style={{width:"100%",padding:"10px",borderRadius:10,background:C.bark,color:C.sand,border:"none",fontSize:"0.88rem",fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-                  ⭐ Guardar lugar
-                </button>
-                <div style={{marginTop:10,fontSize:"0.7rem",color:"#8A7050",lineHeight:1.4}}>
-                  💡 Tip: Busca el lugar en Google Maps, haz clic derecho → copia las coordenadas
-                </div>
+              {/* Search bar */}
+              <div style={{position:"relative",marginBottom:16}}>
+                <input 
+                  value={searchQuery} 
+                  onChange={async (e)=>{
+                    setSearchQuery(e.target.value);
+                    if(e.target.value.length < 3) { setSearchResults([]); return; }
+                    setSearching(true);
+                    try {
+                      const res = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(e.target.value + " Malaysia")}&key=${GOOGLE_MAPS_KEY}`);
+                      const data = await res.json();
+                      setSearchResults(data.results?.slice(0,5) || []);
+                    } catch(err) { console.error(err); }
+                    setSearching(false);
+                  }}
+                  placeholder="Buscar lugares en Malasia..."
+                  style={{width:"100%",padding:"12px 42px 12px 16px",borderRadius:12,border:`2px solid ${C.light}`,fontSize:"0.9rem",background:C.sand,fontFamily:"inherit"}}
+                />
+                <span style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:"1.2rem"}}>🔍</span>
               </div>
+
+              {/* Search results */}
+              {searchResults.length > 0 && (
+                <div style={{marginBottom:16,background:C.sand,borderRadius:12,border:`1px solid ${C.light}`,overflow:"hidden"}}>
+                  {searchResults.map((place,i)=>(
+                    <div key={i} style={{padding:"10px 14px",borderBottom:i<searchResults.length-1?`1px solid ${C.light}`:"none",cursor:"pointer",transition:"background 0.15s"}}
+                      onMouseEnter={e=>e.currentTarget.style.background=C.light}
+                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",gap:10}}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontWeight:600,fontSize:"0.86rem",color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{place.name}</div>
+                          <div style={{fontSize:"0.72rem",color:"#9A8060",marginTop:2}}>{place.formatted_address}</div>
+                        </div>
+                        <select onChange={(e)=>{
+                          if(!e.target.value) return;
+                          update(d=>{
+                            d.favoritos.push({
+                              id:uid(),
+                              name:place.name,
+                              lat:place.geometry.location.lat,
+                              lng:place.geometry.location.lng,
+                              category:e.target.value,
+                              visited:false
+                            });
+                            return d;
+                          });
+                          setSearchQuery("");
+                          setSearchResults([]);
+                          showToast("⭐ Lugar guardado");
+                          e.target.value = "";
+                        }}
+                          style={{padding:"4px 8px",borderRadius:8,border:`1.5px solid ${C.clay}`,fontSize:"0.75rem",cursor:"pointer",background:"white",fontFamily:"inherit"}}>
+                          <option value="">+ Añadir</option>
+                          {Object.entries(FAV_CATEGORIES).map(([key,cat])=>(
+                            <option key={key} value={key}>{cat.emoji} {cat.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Favoritos list */}
+              {favoritos.length === 0 && <div style={{textAlign:"center",color:"#9A8060",fontSize:"0.84rem",padding:20,fontStyle:"italic"}}>Aún no hay favoritos. Usa el buscador para añadir lugares.</div>}
+
+              {Object.entries(FAV_CATEGORIES).map(([catKey, cat])=>{
+                const catFavs = favoritos.filter(f=>f.category===catKey);
+                if(catFavs.length === 0) return null;
+                return (
+                  <div key={catKey} style={{marginBottom:14}}>
+                    <div style={{fontSize:"0.75rem",fontWeight:600,color:cat.color,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em",display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:"1.1rem"}}>{cat.emoji}</span> {cat.label} ({catFavs.length})
+                    </div>
+                    {catFavs.map((fav,i)=>{
+                      const globalIndex = favoritos.findIndex(f=>f.id===fav.id);
+                      return (
+                        <div key={fav.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px",marginBottom:6,background:fav.visited?"#F0FFF4":C.sand,border:`1.5px solid ${fav.visited?"#80C890":C.light}`,borderRadius:12,transition:"all 0.15s"}}>
+                          <div onClick={()=>update(d=>{d.favoritos[globalIndex].visited=!d.favoritos[globalIndex].visited;return d;})}
+                            style={{width:24,height:24,borderRadius:"50%",border:`2px solid ${fav.visited?C.moss:cat.color}`,background:fav.visited?C.moss:"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,color:"white",fontSize:"0.75rem",transition:"all 0.15s"}}>
+                            {fav.visited&&"✓"}
+                          </div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontWeight:600,fontSize:"0.86rem",color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:fav.visited?"line-through":"none",opacity:fav.visited?0.6:1}}>{fav.name}</div>
+                          </div>
+                          <button onClick={()=>update(d=>{d.ideas.push({id:uid(),color:"blue",text:fav.name,author:userName,votes:0,voters:[]});return d;})}
+                            style={{padding:"4px 10px",borderRadius:8,border:`1.5px solid ${C.sky}`,background:"transparent",color:C.sky,fontSize:"0.7rem",fontWeight:500,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                            → Ideas
+                          </button>
+                          <span onClick={()=>update(d=>{d.favoritos.splice(globalIndex,1);return d;})} style={{cursor:"pointer",color:"#DDD",fontSize:"0.85rem",padding:"0 4px"}}>✕</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Mapa con pins de favoritos */}
+            {/* Map with category pins */}
             {favoritos.length > 0 && (
               <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,overflow:"hidden",boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
-                <div style={{padding:"16px 20px 12px"}}>
+                <div style={{padding:"14px 18px"}}>
                   <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:2}}>🗺️ Mapa de favoritos</div>
-                  <div style={{fontSize:"0.75rem",color:"#9A8060"}}>{favoritos.filter(f=>!f.visited).length} pendientes · {favoritos.filter(f=>f.visited).length} visitados</div>
+                  <div style={{fontSize:"0.74rem",color:"#9A8060",display:"flex",gap:10,flexWrap:"wrap",marginTop:6}}>
+                    {Object.entries(FAV_CATEGORIES).map(([key,cat])=>{
+                      const count = favoritos.filter(f=>f.category===key).length;
+                      if(count===0) return null;
+                      return <span key={key}>{cat.emoji} {count}</span>;
+                    })}
+                  </div>
                 </div>
-                <iframe
-                  title="Favoritos"
-                  src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBa2FxudYPqY4zrEoo4P9fSWMffzLuJxBY&center=${favoritos[0]?.lat||3.1390},${favoritos[0]?.lng||101.6869}&zoom=11`}
-                  width="100%" height="400" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
-                />
+                <div style={{height:450,width:"100%",position:"relative"}}>
+                  <iframe
+                    src={`https://www.google.com/maps/embed/v1/view?key=${GOOGLE_MAPS_KEY}&center=${favoritos[0]?.lat||3.1390},${favoritos[0]?.lng||101.6869}&zoom=12`}
+                    width="100%" height="100%" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
+                  />
+                </div>
               </div>
             )}
           </div>
