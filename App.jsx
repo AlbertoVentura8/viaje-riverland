@@ -726,68 +726,76 @@ export default function App() {
               <div style={{fontFamily:"Georgia,serif",fontSize:"1rem",fontWeight:500,color:C.bark,marginBottom:4}}>⭐ Lugares favoritos</div>
               <div style={{fontSize:"0.77rem",color:"#9A8060",marginBottom:16}}>Busca y guarda sitios que queréis visitar</div>
 
-              {/* Search bar */}
-              <div style={{position:"relative",marginBottom:16}}>
+              {/* Manual add form */}
+              <div style={{background:C.sand,borderRadius:14,padding:16,marginBottom:16}}>
+                <div style={{fontSize:"0.75rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Añadir lugar manualmente</div>
+                
                 <input 
                   value={searchQuery} 
-                  onChange={async (e)=>{
-                    setSearchQuery(e.target.value);
-                    if(e.target.value.length < 3) { setSearchResults([]); return; }
-                    setSearching(true);
-                    try {
-                      const res = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(e.target.value + " Malaysia")}&key=${GOOGLE_MAPS_KEY}`);
-                      const data = await res.json();
-                      setSearchResults(data.results?.slice(0,5) || []);
-                    } catch(err) { console.error(err); }
-                    setSearching(false);
-                  }}
-                  placeholder="Buscar lugares en Malasia..."
-                  style={{width:"100%",padding:"12px 42px 12px 16px",borderRadius:12,border:`2px solid ${C.light}`,fontSize:"0.9rem",background:C.sand,fontFamily:"inherit"}}
+                  onChange={e=>setSearchQuery(e.target.value)}
+                  placeholder="Nombre del lugar (ej: Batu Caves)"
+                  style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.88rem",marginBottom:10,background:"white",fontFamily:"inherit"}}
                 />
-                <span style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:"1.2rem"}}>🔍</span>
-              </div>
 
-              {/* Search results */}
-              {searchResults.length > 0 && (
-                <div style={{marginBottom:16,background:C.sand,borderRadius:12,border:`1px solid ${C.light}`,overflow:"hidden"}}>
-                  {searchResults.map((place,i)=>(
-                    <div key={i} style={{padding:"10px 14px",borderBottom:i<searchResults.length-1?`1px solid ${C.light}`:"none",cursor:"pointer",transition:"background 0.15s"}}
-                      onMouseEnter={e=>e.currentTarget.style.background=C.light}
-                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",gap:10}}>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontWeight:600,fontSize:"0.86rem",color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{place.name}</div>
-                          <div style={{fontSize:"0.72rem",color:"#9A8060",marginTop:2}}>{place.formatted_address}</div>
-                        </div>
-                        <select onChange={(e)=>{
-                          if(!e.target.value) return;
-                          update(d=>{
-                            d.favoritos.push({
-                              id:uid(),
-                              name:place.name,
-                              lat:place.geometry.location.lat,
-                              lng:place.geometry.location.lng,
-                              category:e.target.value,
-                              visited:false
-                            });
-                            return d;
-                          });
-                          setSearchQuery("");
-                          setSearchResults([]);
-                          showToast("⭐ Lugar guardado");
-                          e.target.value = "";
-                        }}
-                          style={{padding:"4px 8px",borderRadius:8,border:`1.5px solid ${C.clay}`,fontSize:"0.75rem",cursor:"pointer",background:"white",fontFamily:"inherit"}}>
-                          <option value="">+ Añadir</option>
-                          {Object.entries(FAV_CATEGORIES).map(([key,cat])=>(
-                            <option key={key} value={key}>{cat.emoji} {cat.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                <div style={{background:"#FFF9E6",border:`1.5px solid #F0D060`,borderRadius:10,padding:12,marginBottom:10}}>
+                  <div style={{fontSize:"0.75rem",fontWeight:600,color:"#8B7020",marginBottom:6}}>💡 Cómo conseguir coordenadas:</div>
+                  <ol style={{fontSize:"0.74rem",color:"#8B7020",paddingLeft:16,lineHeight:1.6}}>
+                    <li>Busca el lugar en Google Maps</li>
+                    <li>Haz <b>clic largo</b> en el sitio exacto</li>
+                    <li>Copia las coordenadas que aparecen</li>
+                    <li>Pégalas abajo</li>
+                  </ol>
+                  <a href="https://www.google.com/maps/@3.1390,101.6869,12z" target="_blank" rel="noopener noreferrer"
+                    style={{display:"inline-block",marginTop:8,padding:"6px 12px",background:C.bark,color:C.sand,borderRadius:8,fontSize:"0.74rem",fontWeight:600,textDecoration:"none"}}>
+                    🗺️ Abrir Google Maps
+                  </a>
+                </div>
+
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                  <input 
+                    type="text" 
+                    value={searchResults[0]||""} 
+                    onChange={e=>setSearchResults([e.target.value, searchResults[1]||""])}
+                    placeholder="Latitud (ej: 3.2379)"
+                    style={{padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.82rem",background:"white",fontFamily:"inherit"}}
+                  />
+                  <input 
+                    type="text" 
+                    value={searchResults[1]||""} 
+                    onChange={e=>setSearchResults([searchResults[0]||"", e.target.value])}
+                    placeholder="Longitud (ej: 101.6869)"
+                    style={{padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.82rem",background:"white",fontFamily:"inherit"}}
+                  />
+                </div>
+
+                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8}}>
+                  {Object.entries(FAV_CATEGORIES).map(([key,cat])=>(
+                    <button key={key} onClick={()=>{
+                      if(!searchQuery.trim()||!searchResults[0]||!searchResults[1]) {
+                        showToast("⚠️ Rellena todos los campos");
+                        return;
+                      }
+                      update(d=>{
+                        d.favoritos.push({
+                          id:uid(),
+                          name:searchQuery.trim(),
+                          lat:parseFloat(searchResults[0]),
+                          lng:parseFloat(searchResults[1]),
+                          category:key,
+                          visited:false
+                        });
+                        return d;
+                      });
+                      setSearchQuery("");
+                      setSearchResults([]);
+                      showToast(`${cat.emoji} Lugar guardado`);
+                    }}
+                      style={{padding:"10px 8px",borderRadius:10,border:`2px solid ${cat.color}`,background:"white",color:cat.color,fontSize:"0.82rem",fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                      <span style={{fontSize:"1.1rem"}}>{cat.emoji}</span> {cat.label}
+                    </button>
                   ))}
                 </div>
-              )}
+              </div>
 
               {/* Favoritos list */}
               {favoritos.length === 0 && <div style={{textAlign:"center",color:"#9A8060",fontSize:"0.84rem",padding:20,fontStyle:"italic"}}>Aún no hay favoritos. Usa el buscador para añadir lugares.</div>}
