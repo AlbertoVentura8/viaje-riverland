@@ -41,7 +41,11 @@ const DEFAULT_DATA = {
       { id: 3, time: "20:00", text: "Cena de bienvenida 🥂", color: C.sunset },
     ]},
   ],
-  ideas: [],
+  ideas: [
+    { id: 1, color: "blue", text: "Torres Petronas - Kuala Lumpur", author: "Sistema", fires: 0, voters: [] },
+    { id: 2, color: "green", text: "Langkawi - playas paradisíacas", author: "Sistema", fires: 0, voters: [] },
+    { id: 3, color: "yellow", text: "Cuevas Batu - templos hindúes", author: "Sistema", fires: 0, voters: [] },
+  ],
   expenses: [],
   checklist: [
     { id: 1, text: "Pasaporte / DNI", done: false },
@@ -56,10 +60,19 @@ const DEFAULT_DATA = {
     { id: 3, text: "Cambiar divisas (Ringgit)", done: false },
     { id: 4, text: "Visado (comprobar requisitos)", done: false },
   ],
+  favoritos: [],
 };
 
 let nextId = 1000;
 const uid = () => ++nextId;
+
+// Format day date from trip start
+const getDayDate = (dayIndex) => {
+  const start = new Date(2026, 6, 3); // July 3, 2026
+  const dayDate = new Date(start);
+  dayDate.setDate(start.getDate() + dayIndex);
+  return dayDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+};
 
 function calcSettlement(members, expenses) {
   const balance = {};
@@ -103,10 +116,15 @@ export default function App() {
   const [nameInput, setNameInput]   = useState("");
   const [nameSet, setNameSet]       = useState(false);
   const [editingExpense, setEditExp]= useState(null);
+  const [editingFav, setEditFav]    = useState(null);
+  const [newFavName, setNewFavName] = useState("");
+  const [newFavLat, setNewFavLat]   = useState("");
+  const [newFavLng, setNewFavLng]   = useState("");
   const isSaving                    = useRef(false);
   const dbRef                       = useRef(ref(db, "viaje"));
   const [eurAmount, setEurAmount]   = useState("");
   const [myrAmount, setMyrAmount]   = useState("");
+  const [mapSearch, setMapSearch]   = useState("");
   const EUR_MYR                     = 4.98; // tasa aproximada
 
   useEffect(() => {
@@ -172,7 +190,7 @@ export default function App() {
     <div style={{minHeight:"100vh",background:C.bark,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div style={{background:C.cream,borderRadius:24,padding:"40px 28px",maxWidth:360,width:"100%",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,0.35)"}}>
         <div style={{fontSize:52,marginBottom:12}}>🌴</div>
-        <div style={{fontFamily:"Georgia,serif",fontSize:"1.8rem",fontWeight:700,color:C.bark,marginBottom:6}}>¡HOLA, RIVERLANDER!</div>
+        <div style={{fontFamily:"Georgia,serif",fontSize:"1.8rem",fontWeight:700,color:C.bark,marginBottom:6}}>¡Hola, RIVERLAND!</div>
         <div style={{fontSize:"0.88rem",color:"#8A7050",marginBottom:26,lineHeight:1.6}}>¿Cómo te llamas?<br/>Los demás verán quién anotó cada cosa.</div>
         <input
           value={nameInput}
@@ -202,15 +220,25 @@ export default function App() {
   const ideas     = data.ideas || [];
   const checklist = data.checklist || [];
   const preList   = data.preList || [];
+  const favoritos = data.favoritos || [];
 
   const totalExp = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
   const { balance, transactions } = calcSettlement(members, expenses);
+
+  // Calculate trip dates
+  const getTripDate = (dayIndex) => {
+    const start = new Date(2026, 6, 3); // July 3, 2026
+    const date = new Date(start);
+    date.setDate(date.getDate() + dayIndex);
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+  };
 
   const TABS = [
     {id:"itinerario", label:"📅 Itinerario"},
     {id:"ideas",      label:"💡 Ideas"},
     {id:"gastos",     label:"💸 Gastos"},
     {id:"checklist",  label:"✅ Lista"},
+    {id:"favoritos",  label:"⭐ Favoritos"},
     {id:"cambio",     label:"💱 Cambio"},
     {id:"mapa",       label:"🗺️ Mapa"},
   ];
@@ -251,12 +279,12 @@ export default function App() {
       `}</style>
 
       {/* HERO */}
-      <div style={{position:"relative",padding:"44px 20px 32px",textAlign:"center",overflow:"hidden",minHeight:140,background:"linear-gradient(180deg,#0D4F6B 0%,#1A7A8A 25%,#2AA5A0 45%,#48C4A8 58%,#C8A96A 72%,#D4956A 82%,#8B5E3C 100%)"}}>
+      <div style={{position:"relative",padding:"18px 20px 14px",textAlign:"center",overflow:"hidden",minHeight:100,background:"linear-gradient(180deg,#0D4F6B 0%,#1A7A8A 25%,#2AA5A0 45%,#48C4A8 58%,#C8A96A 72%,#D4956A 82%,#8B5E3C 100%)"}}>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 30% 40%,rgba(255,220,100,0.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(0,120,140,0.2) 0%,transparent 50%)"}}/>
         <div style={{position:"absolute",top:"54%",left:0,right:0,height:3,background:"rgba(255,255,255,0.18)",filter:"blur(2px)"}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:50,background:"linear-gradient(transparent,rgba(80,130,80,0.4))"}}/>
         <div style={{position:"relative",zIndex:1}}>
-          <div style={{color:"#fff",fontFamily:"Georgia,serif",fontSize:"clamp(1.4rem,5.5vw,2.4rem)",fontWeight:700,letterSpacing:"0.04em",textShadow:"0 2px 12px rgba(0,0,0,0.5)",textTransform:"uppercase",marginBottom:14}}>
+          <div style={{color:"#fff",fontFamily:"Georgia,serif",fontSize:"clamp(1.2rem,5vw,1.9rem)",fontWeight:700,letterSpacing:"0.04em",textShadow:"0 2px 12px rgba(0,0,0,0.5)",textTransform:"uppercase",marginBottom:10}}>
             {TRIP.tripName}
           </div>
           <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",paddingBottom:4}}>
@@ -269,7 +297,7 @@ export default function App() {
               {daysLeft > 0 ? `⏳ ${daysLeft} días` : "🎉 ¡Estamos en Malasia!"}
             </span>
           </div>
-          <div style={{marginTop:12,fontSize:"0.7rem",color:"rgba(255,255,255,0.65)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          <div style={{marginTop:8,fontSize:"0.68rem",color:"rgba(255,255,255,0.65)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
             {saving
               ? <><span className="pulse" style={{width:6,height:6,borderRadius:"50%",background:C.amber,display:"inline-block"}}/>Guardando...</>
               : <><span style={{width:6,height:6,borderRadius:"50%",background:"#80C890",display:"inline-block"}}/>Sincronizado · {userName}</>}
@@ -278,46 +306,60 @@ export default function App() {
       </div>
 
       {/* TABS */}
-      <div style={{display:"flex",gap:2,padding:"10px 12px 0",background:C.sand,borderBottom:`2px solid ${C.light}`,overflowX:"auto"}}>
+      <div style={{display:"flex",gap:2,padding:"6px 12px 0",background:C.sand,borderBottom:`2px solid ${C.light}`,overflowX:"auto"}}>
         {TABS.map(t=>(
           <button key={t.id} className="tab-btn" onClick={()=>setTab(t.id)}
-            style={{padding:"8px 14px",borderRadius:"10px 10px 0 0",fontSize:"0.82rem",fontWeight:800,cursor:"pointer",whiteSpace:"nowrap",border:`2px solid ${tab===t.id?C.light:"transparent"}`,borderBottom:tab===t.id?`2px solid ${C.cream}`:"2px solid transparent",background:tab===t.id?C.cream:"transparent",color:tab===t.id?C.bark:"#8B7355",marginBottom:tab===t.id?-2:0,fontFamily:"inherit"}}>
+            style={{padding:"8px 14px",borderRadius:"10px 10px 0 0",fontSize:"0.82rem",fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",border:`2px solid ${tab===t.id?C.light:"transparent"}`,borderBottom:tab===t.id?`2px solid ${C.cream}`:"2px solid transparent",background:tab===t.id?C.cream:"transparent",color:tab===t.id?C.bark:"#8B7355",marginBottom:tab===t.id?-2:0,fontFamily:"inherit"}}>
             {t.label}
           </button>
         ))}
       </div>
 
       {/* CONTENT */}
-      <div style={{maxWidth:820,margin:"0 auto",padding:"22px 13px 80px"}}>
+      <div style={{maxWidth:820,margin:"0 auto",padding:"12px 13px 80px"}}>
 
         {/* ITINERARIO */}
         {tab==="itinerario" && (
           <div>
             {days.map((day,di)=>{
               const open = openDays[day.id]!==false;
+              // Calculate date: day 1 = 03/07/2026
+              const tripStart = new Date(2026, 6, 3);
+              const dayDate = new Date(tripStart);
+              dayDate.setDate(tripStart.getDate() + di);
+              const monthNames = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+              const dateStr = `${dayDate.getDate()} ${monthNames[dayDate.getMonth()]}`;
+              // Sort activities by time
+              const sortedActivities = [...(day.activities||[])].sort((a,b)=>(a.time||"").localeCompare(b.time||""));
               return (
                 <div key={day.id} style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,marginBottom:11,boxShadow:"0 2px 12px rgba(90,60,30,0.06)",overflow:"hidden"}}>
                   <div onClick={()=>setOpenDays(p=>({...p,[day.id]:!open}))} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 17px",cursor:"pointer"}}>
                     <div style={{width:38,height:38,background:C.bark,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Georgia,serif",fontSize:"1.1rem",fontWeight:700,color:C.sand,flexShrink:0}}>{di+1}</div>
                     <div style={{flex:1}}>
-                      <input value={day.title} onClick={e=>e.stopPropagation()} onChange={e=>update(d=>{d.days[di].title=e.target.value;return d;})}
-                        style={{background:"transparent",border:"none",fontFamily:"Georgia,serif",fontSize:"0.95rem",fontWeight:500,color:C.bark,width:"100%"}} placeholder="Título del día"/>
-                      <div style={{fontSize:"0.7rem",color:"#A08060",marginTop:1}}>{(day.activities||[]).filter(a=>a.text).length} actividades</div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                        <input value={day.title} onClick={e=>e.stopPropagation()} onChange={e=>update(d=>{d.days[di].title=e.target.value;return d;})}
+                          style={{background:"transparent",border:"none",fontFamily:"Georgia,serif",fontSize:"0.95rem",fontWeight:500,color:C.bark,flex:1,minWidth:0}} placeholder="Título del día"/>
+                        <span style={{fontSize:"0.8rem",fontWeight:600,color:C.sky,whiteSpace:"nowrap"}}>{dateStr}</span>
+                      </div>
+                      <div style={{fontSize:"0.7rem",color:"#A08060"}}>Día {di+1} del viaje · {sortedActivities.filter(a=>a.text).length} actividades</div>
                     </div>
                     <div style={{color:C.clay,fontSize:"0.8rem"}}>{open?"▲":"▼"}</div>
                   </div>
                   {open && (
                     <div style={{padding:"0 17px 13px",borderTop:`1px solid ${C.light}`}}>
-                      {(day.activities||[]).map((act,ai)=>(
+                      {sortedActivities.map((act,ai)=>{
+                        const origIndex = day.activities.findIndex(a=>a.id===act.id);
+                        return (
                         <div key={act.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:`1px dashed ${C.light}`}}>
-                          <input type="time" value={act.time} onChange={e=>update(d=>{d.days[di].activities[ai].time=e.target.value;return d;})}
+                          <input type="time" value={act.time} onChange={e=>update(d=>{d.days[di].activities[origIndex].time=e.target.value;d.days[di].activities.sort((a,b)=>(a.time||"").localeCompare(b.time||""));return d;})}
                             style={{border:"none",background:"transparent",color:C.clay,fontSize:"0.72rem",fontWeight:500,minWidth:48}}/>
                           <div style={{width:7,height:7,borderRadius:"50%",background:act.color||C.sky,flexShrink:0}}/>
-                          <input value={act.text} onChange={e=>update(d=>{d.days[di].activities[ai].text=e.target.value;return d;})}
+                          <input value={act.text} onChange={e=>update(d=>{d.days[di].activities[origIndex].text=e.target.value;return d;})}
                             style={{flex:1,border:"none",background:"transparent",fontSize:"0.85rem",color:C.ink}} placeholder="¿Qué haréis?"/>
-                          <span onClick={()=>update(d=>{d.days[di].activities.splice(ai,1);return d;})} style={{cursor:"pointer",color:"#DDD",fontSize:"0.76rem"}}>✕</span>
+                          <span onClick={()=>update(d=>{const idx=d.days[di].activities.findIndex(a=>a.id===act.id);if(idx>-1)d.days[di].activities.splice(idx,1);return d;})} style={{cursor:"pointer",color:"#DDD",fontSize:"0.76rem"}}>✕</span>
                         </div>
-                      ))}
+                      );
+                      })}
                       <div style={{display:"flex",gap:8,marginTop:9,flexWrap:"wrap"}}>
                         <AddBtn onClick={()=>update(d=>{d.days[di].activities.push({id:uid(),time:"12:00",text:"",color:C.sky});return d;})}>＋ Actividad</AddBtn>
                         <AddBtn onClick={()=>update(d=>{d.days.splice(di,1);return d;})} style={{borderColor:"#E07070",color:"#E07070"}}>🗑 Día</AddBtn>
@@ -336,28 +378,59 @@ export default function App() {
           <div>
             <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:16,marginBottom:16,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:"1rem",fontWeight:500,color:C.bark,marginBottom:3}}>💡 Tablero de ideas</div>
-              <div style={{fontSize:"0.77rem",color:"#9A8060"}}>Añade ideas y vota las que más os gusten. Se sincroniza al momento.</div>
+              <div style={{fontSize:"0.77rem",color:"#9A8060"}}>Vota con fuego 🔥 (1-5) las mejores ideas. Se rankean automáticamente.</div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
-              {ideas.map((idea,i)=>{
-                const s = IDEA_COLORS[idea.color]||IDEA_COLORS.yellow;
-                return (
-                  <div key={idea.id} className="idea-card" style={{background:s.bg,border:`1.5px solid ${s.border}`,borderRadius:14,padding:14,position:"relative"}}>
-                    <div onClick={()=>{update(d=>{const v=d.ideas[i].voters||[];if(!v.includes(userName)){d.ideas[i].votes=(d.ideas[i].votes||0)+1;d.ideas[i].voters=[...v,userName];}return d;});showToast("👍 Votado!");}}
-                      style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,0.07)",borderRadius:100,padding:"3px 9px",fontSize:"0.7rem",cursor:"pointer",display:"flex",alignItems:"center",gap:3}}>
-                      👍 {idea.votes||0}
-                    </div>
-                    <div style={{fontSize:"0.67rem",fontWeight:600,color:"#9A7850",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.05em"}}>{s.label}</div>
-                    <textarea value={idea.text} onChange={e=>update(d=>{d.ideas[i].text=e.target.value;return d;})}
-                      style={{width:"100%",minHeight:66,background:"transparent",border:"none",fontSize:"0.85rem",lineHeight:1.5,resize:"none",color:C.ink,fontFamily:"inherit"}} placeholder="Tu idea..."/>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:6}}>
-                      <div style={{fontSize:"0.68rem",color:"#9A8A6A"}}>✏️ {idea.author}</div>
-                      <span onClick={()=>update(d=>{d.ideas.splice(i,1);return d;})} style={{fontSize:"0.7rem",cursor:"pointer",color:"#CCC"}}>✕</span>
-                    </div>
+            {Object.entries(IDEA_COLORS).map(([colorKey,colorData])=>{
+              const filtered = ideas.filter(i=>i.color===colorKey).sort((a,b)=>(b.votes||0)-(a.votes||0));
+              if(filtered.length===0) return null;
+              return (
+                <div key={colorKey} style={{marginBottom:16}}>
+                  <div style={{fontSize:"0.75rem",fontWeight:600,color:colorData.color||C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                    {colorData.label}
+                    <span style={{fontSize:"0.65rem",fontWeight:400,color:"#9A8060"}}>({filtered.length})</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:10}}>
+                    {filtered.map((idea)=>{
+                      const i = ideas.findIndex(ii=>ii.id===idea.id);
+                      const myVote = (idea.voters||[]).includes(userName);
+                      return (
+                        <div key={idea.id} className="idea-card" style={{background:colorData.bg,border:`1.5px solid ${colorData.border}`,borderRadius:14,padding:14,position:"relative"}}>
+                          <div style={{position:"absolute",top:10,right:10,display:"flex",alignItems:"center",gap:4}}>
+                            {[1,2,3,4,5].map(fire=>{
+                              const active = (idea.votes||0)>=fire;
+                              return (
+                                <span key={fire} onClick={()=>{
+                                  update(d=>{
+                                    const voters=d.ideas[i].voters||[];
+                                    if(!voters.includes(userName)){
+                                      d.ideas[i].votes=fire;
+                                      d.ideas[i].voters=[...voters,userName];
+                                    } else {
+                                      d.ideas[i].votes=fire;
+                                    }
+                                    return d;
+                                  });
+                                  showToast(`🔥 ${fire} fuego${fire>1?"s":""}`);
+                                }}
+                                  style={{fontSize:"1.1rem",cursor:"pointer",opacity:active?1:0.2,transition:"all 0.15s",filter:active?"grayscale(0)":"grayscale(1)"}}>
+                                  🔥
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <textarea value={idea.text} onChange={e=>update(d=>{d.ideas[i].text=e.target.value;return d;})}
+                            style={{width:"100%",minHeight:66,background:"transparent",border:"none",fontSize:"0.85rem",lineHeight:1.5,resize:"none",color:C.ink,fontFamily:"inherit",marginTop:26}} placeholder="Describe la idea..."/>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:6}}>
+                            <div style={{fontSize:"0.68rem",color:"#9A8A6A"}}>✏️ {idea.author}</div>
+                            <span onClick={()=>update(d=>{d.ideas.splice(i,1);return d;})} style={{fontSize:"0.7rem",cursor:"pointer",color:"#CCC"}}>✕</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
             <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:13}}>
               {Object.entries(IDEA_COLORS).map(([color,s])=>(
                 <AddBtn key={color} onClick={()=>update(d=>{d.ideas.push({id:uid(),color,text:"",author:userName,votes:0,voters:[]});return d;})}>
@@ -460,6 +533,72 @@ export default function App() {
                 })
               }
             </div>
+
+            {/* GRÁFICOS */}
+            {expenses.length > 0 && (
+              <div style={{marginTop:13}}>
+                {/* Gasto por persona */}
+                <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:18,marginBottom:13,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:14}}>📊 Gasto total por persona</div>
+                  {(() => {
+                    const personTotals = {};
+                    members.forEach(m => { personTotals[m] = 0; });
+                    expenses.forEach(exp => {
+                      const payer = exp.paidBy;
+                      if (payer && personTotals[payer] !== undefined) {
+                        personTotals[payer] += parseFloat(exp.amount) || 0;
+                      }
+                    });
+                    const maxSpent = Math.max(...Object.values(personTotals), 1);
+                    return Object.entries(personTotals).sort((a,b) => b[1] - a[1]).map(([name, amount], i) => (
+                      <div key={name} style={{marginBottom:10}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <div style={{width:20,height:20,borderRadius:"50%",background:AVATAR_BG[members.indexOf(name)%AVATAR_BG.length],display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:"0.65rem",fontWeight:700}}>{name[0]?.toUpperCase()}</div>
+                            <span style={{fontSize:"0.85rem",fontWeight:500}}>{name}</span>
+                          </div>
+                          <span style={{fontSize:"0.85rem",fontWeight:700,color:C.bark}}>{amount.toFixed(2)}€</span>
+                        </div>
+                        <div style={{height:24,background:C.light,borderRadius:12,overflow:"hidden"}}>
+                          <div style={{height:"100%",background:AVATAR_BG[members.indexOf(name)%AVATAR_BG.length],width:`${(amount/maxSpent)*100}%`,borderRadius:12,transition:"width 0.5s",display:"flex",alignItems:"center",paddingLeft:8}}>
+                            <span style={{fontSize:"0.7rem",color:"white",fontWeight:600}}>{((amount/totalExp)*100).toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+
+                {/* Gasto por categoría */}
+                <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:18,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:14}}>🥧 Gasto por categoría</div>
+                  {(() => {
+                    const catTotals = {};
+                    Object.keys(CAT).forEach(c => { catTotals[c] = 0; });
+                    expenses.forEach(exp => {
+                      const cat = exp.cat || "otro";
+                      catTotals[cat] = (catTotals[cat] || 0) + (parseFloat(exp.amount) || 0);
+                    });
+                    return Object.entries(catTotals).filter(([,amt]) => amt > 0).sort((a,b) => b[1] - a[1]).map(([cat, amount]) => (
+                      <div key={cat} style={{marginBottom:10}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{fontSize:"1rem"}}>{CAT[cat].emoji}</span>
+                            <span style={{fontSize:"0.85rem",fontWeight:500,textTransform:"capitalize"}}>{cat}</span>
+                          </div>
+                          <span style={{fontSize:"0.85rem",fontWeight:700,color:C.bark}}>{amount.toFixed(2)}€</span>
+                        </div>
+                        <div style={{height:24,background:C.light,borderRadius:12,overflow:"hidden"}}>
+                          <div style={{height:"100%",background:CAT[cat].color,width:`${(amount/totalExp)*100}%`,borderRadius:12,transition:"width 0.5s",display:"flex",alignItems:"center",paddingLeft:8}}>
+                            <span style={{fontSize:"0.7rem",color:"white",fontWeight:600}}>{((amount/totalExp)*100).toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -572,6 +711,77 @@ export default function App() {
         );
       })()}
 
+        {/* FAVORITOS */}
+        {tab==="favoritos" && (
+          <div>
+            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,padding:18,marginBottom:13,boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"1rem",fontWeight:500,color:C.bark,marginBottom:4}}>⭐ Lugares favoritos</div>
+              <div style={{fontSize:"0.77rem",color:"#9A8060",marginBottom:16}}>Guarda sitios que queréis visitar</div>
+
+              {favoritos.length === 0 && <div style={{textAlign:"center",color:"#9A8060",fontSize:"0.84rem",padding:20,fontStyle:"italic"}}>Aún no hay favoritos. Añade lugares que queréis visitar.</div>}
+
+              {favoritos.map((fav,i) => (
+                <div key={fav.id} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 10px",marginBottom:8,background:fav.visited?"#F0FFF4":C.sand,border:`1.5px solid ${fav.visited?"#80C890":C.light}`,borderRadius:14,transition:"all 0.15s"}}>
+                  <div onClick={()=>update(d=>{d.favoritos[i].visited=!d.favoritos[i].visited;return d;})}
+                    style={{width:28,height:28,borderRadius:"50%",border:`2px solid ${fav.visited?C.moss:C.clay}`,background:fav.visited?C.moss:"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,color:"white",fontSize:"0.8rem",transition:"all 0.15s"}}>
+                    {fav.visited&&"✓"}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:600,fontSize:"0.88rem",color:C.bark,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:fav.visited?"line-through":"none",opacity:fav.visited?0.6:1}}>{fav.name}</div>
+                    <div style={{fontSize:"0.7rem",color:"#9A8060",marginTop:2}}>📍 {fav.lat.toFixed(4)}, {fav.lng.toFixed(4)}</div>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexShrink:0}}>
+                    <button onClick={()=>update(d=>{d.ideas.push({id:uid(),color:"blue",text:fav.name + " (desde favoritos)",author:userName,votes:0,voters:[]});return d;})}
+                      style={{padding:"6px 10px",borderRadius:10,border:`1.5px solid ${C.sky}`,background:"transparent",color:C.sky,fontSize:"0.72rem",fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
+                      → Ideas
+                    </button>
+                    <span onClick={()=>update(d=>{d.favoritos.splice(i,1);return d;})} style={{cursor:"pointer",color:"#DDD",fontSize:"0.9rem",padding:"0 4px"}}>✕</span>
+                  </div>
+                </div>
+              ))}
+
+              <div style={{marginTop:16,padding:16,background:C.sand,borderRadius:14}}>
+                <div style={{fontSize:"0.75rem",fontWeight:600,color:C.clay,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Añadir lugar</div>
+                <input value={newFavName} onChange={e=>setNewFavName(e.target.value)} placeholder="Nombre del lugar..."
+                  style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.88rem",marginBottom:8,background:"white",fontFamily:"inherit"}}/>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                  <input type="number" step="0.0001" value={newFavLat} onChange={e=>setNewFavLat(e.target.value)} placeholder="Latitud (ej: 3.1390)"
+                    style={{padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.82rem",background:"white",fontFamily:"inherit"}}/>
+                  <input type="number" step="0.0001" value={newFavLng} onChange={e=>setNewFavLng(e.target.value)} placeholder="Longitud (ej: 101.6869)"
+                    style={{padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.light}`,fontSize:"0.82rem",background:"white",fontFamily:"inherit"}}/>
+                </div>
+                <button onClick={()=>{
+                  if(!newFavName.trim()||!newFavLat||!newFavLng)return;
+                  update(d=>{d.favoritos.push({id:uid(),name:newFavName.trim(),lat:parseFloat(newFavLat),lng:parseFloat(newFavLng),visited:false});return d;});
+                  setNewFavName("");setNewFavLat("");setNewFavLng("");
+                  showToast("⭐ Lugar guardado");
+                }}
+                  style={{width:"100%",padding:"10px",borderRadius:10,background:C.bark,color:C.sand,border:"none",fontSize:"0.88rem",fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                  ⭐ Guardar lugar
+                </button>
+                <div style={{marginTop:10,fontSize:"0.7rem",color:"#8A7050",lineHeight:1.4}}>
+                  💡 Tip: Busca el lugar en Google Maps, haz clic derecho → copia las coordenadas
+                </div>
+              </div>
+            </div>
+
+            {/* Mapa con pins de favoritos */}
+            {favoritos.length > 0 && (
+              <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,overflow:"hidden",boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
+                <div style={{padding:"16px 20px 12px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:2}}>🗺️ Mapa de favoritos</div>
+                  <div style={{fontSize:"0.75rem",color:"#9A8060"}}>{favoritos.filter(f=>!f.visited).length} pendientes · {favoritos.filter(f=>f.visited).length} visitados</div>
+                </div>
+                <iframe
+                  title="Favoritos"
+                  src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBa2FxudYPqY4zrEoo4P9fSWMffzLuJxBY&center=${favoritos[0]?.lat||3.1390},${favoritos[0]?.lng||101.6869}&zoom=11`}
+                  width="100%" height="400" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* CAMBIO */}
         {tab==="cambio" && (
           <div>
@@ -619,15 +829,25 @@ export default function App() {
         {/* MAPA */}
         {tab==="mapa" && (
           <div style={{margin:"-12px -13px 0"}}>
-            <div style={{background:"white",borderRadius:16,border:`1.5px solid ${C.light}`,overflow:"hidden",boxShadow:"0 2px 12px rgba(90,60,30,0.06)"}}>
-              <div style={{padding:"18px 20px 14px"}}>
-                <div style={{fontFamily:"Georgia,serif",fontSize:"1.1rem",fontWeight:500,color:C.bark,marginBottom:3}}>🗺️ Mapa de Malasia</div>
-                <div style={{fontSize:"0.78rem",color:"#9A8060"}}>Explora los destinos del viaje</div>
+            <div style={{background:"white",overflow:"hidden"}}>
+              <div style={{padding:"12px 20px 10px"}}>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"0.98rem",fontWeight:500,color:C.bark,marginBottom:2}}>🗺️ Mapa de Malasia</div>
+                <input
+                  type="text"
+                  placeholder="🔍 Buscar lugar en Malasia..."
+                  onKeyDown={e=>{
+                    if(e.key==="Enter"&&e.target.value.trim()){
+                      const search=encodeURIComponent(e.target.value+" Malaysia");
+                      window.open(`https://www.google.com/maps/search/${search}`,"_blank");
+                    }
+                  }}
+                  style={{width:"100%",padding:"12px 16px",borderRadius:12,border:`1.5px solid ${C.light}`,fontSize:"0.88rem",background:C.sand,color:C.ink,fontFamily:"inherit"}}
+                />
               </div>
               <iframe
                 title="Malasia"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4145831.6!2d107.1!3d4.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3034d3975f6730af%3A0x745969328211cd8!2sMalaysia!5e0!3m2!1ses!2ses!4v1234567890"
-                width="100%" height="700" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
+                width="100%" height="650" style={{border:0,display:"block"}} allowFullScreen loading="lazy"
               />
             </div>
           </div>
